@@ -3,18 +3,22 @@
     "@types/express": "^5.0.0",
     "axios": "^1.8.2",
     "dotenv": "^16.4.7",
-    "eslint": "^9.22.0",
     "express": "^4.21.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "@eslint/js": "^9.22.0",
+    "eslint": "^9.22.0",
+    "globals": "^16.0.0",
+    "nodemon": "^3.1.9",
+    "prettier-eslint": "^16.3.0",
+    "typescript-eslint": "^8.26.0"
   },
   "scripts": {
     "build": "npx tsc",
     "start": "node dist/index.js",
-    "dev": "npx nodemon --ext ts --exec ts-node server/src/index.ts"
+    "dev": "npx nodemon --ext ts --exec ts-node src/index.ts"
   },
   "type": "module"
 }

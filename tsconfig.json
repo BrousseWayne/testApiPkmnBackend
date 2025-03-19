@@ -1,25 +1,22 @@
 {
-  "compilerOptions": {
-    "module": "ESNext",                    // Use ESNext module syntax (ESM)
-    "moduleResolution": "node",            // Use Node.js module resolution strategy
-    "target": "ES2022",                    // Set target to ES2022 (or any version you prefer)
-    "rootDir": "src",                      // The root directory of your source code
-    "outDir": "dist",                      // Output the compiled JS to the 'dist' directory
-    "strict": true,                        // Enable all strict type checking options
-    "strictNullChecks": true,              // Enforce strict null checks
-    "strictFunctionTypes": true,           // Enforce strict function typing
-    "esModuleInterop": true,               // Allow default imports from CommonJS modules
-    "skipLibCheck": true,                  // Skip checking of library declaration files (improves compilation speed)
-    "forceConsistentCasingInFileNames": true, // Enforce consistent casing in file names
-    "resolveJsonModule": true,             // Allows importing of JSON files
-    "sourceMap": true                      // Generate source maps for debugging
-  },
-  "exclude": [
-    "node_modules",                        // Exclude 'node_modules' folder
-    "**/node_modules/*"                    // Exclude nested 'node_modules'
-  ],
-  "include": [
-    "./src/**/*.ts"                          // Include all TypeScript files in the 'src' folder
-  ]
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "CommonJS",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"]
+		},
+		"moduleResolution": "Node",
+		"outDir": "dist",
+		"importsNotUsedAsValues": "remove",
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"types": ["vitest/globals"],
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+	},
+	"include": ["src/**/*"],
+	"exclude": ["node_modules"]
 }
-

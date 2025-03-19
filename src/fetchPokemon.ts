@@ -1,8 +1,11 @@
 import axios from "axios";
 
+const BASE_URL = "https://pokeapi.co/api/v2/pokemon/"
+
 export const fetchPokemon = async (pokemonName: string) => {
+    const url = BASE_URL + pokemonName
     try {
-        const response = await axios.get(`https://pokeapi.co/api/v2/pokemon/${pokemonName}`);
+        const response = await axios.get(url);
 
         // Axios automatically parses the response as JSON, so we can access the data directly
         return response.data;

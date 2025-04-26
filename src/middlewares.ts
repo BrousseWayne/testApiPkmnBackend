@@ -1,13 +1,16 @@
 import { query, validationResult } from "express-validator"
 import type { NextFunction, Request, Response } from "express";
 
-export const validateAndSanitizeQueryString = (queryString: string) => [
-    query(queryString)
-        .trim()
-        .escape()
-        .isString()
-        .notEmpty()
-        .withMessage("queryString is required."),
+export const validateAndSanitizeQueryString = (queryStrings: string[]) => [
+    ...queryStrings.map((param) =>
+        query(param)
+            .optional({ nullable: true })
+            .trim()
+            .escape()
+            .isString()
+            .withMessage(`${param} is malformed`)
+    ),
+
 
     // Check for validation errors
     (req: Request, res: Response, next: NextFunction) => {

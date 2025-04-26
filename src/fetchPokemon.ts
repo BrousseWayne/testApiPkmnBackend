@@ -1,9 +1,18 @@
 import axios from "axios";
 
-const BASE_URL = "https://pokeapi.co/api/v2/pokemon/"
+const BASE_URL = "https://pokeapi.co/api/v2/"
+
+const logIfAxiosError = (err: unknown) => {
+    if (axios.isAxiosError(err)) {
+        console.error('Axios error:', err.response?.data);
+        console.error('Axios status:', err.response?.status);
+    } else {
+        console.error('Unknown error:', err);
+    }
+}
 
 export const fetchPokemon = async (pokemonName: string) => {
-    const url = BASE_URL + pokemonName
+    const url = BASE_URL + "pokemon/" + pokemonName
     try {
         const response = await axios.get(url);
 
@@ -11,13 +20,50 @@ export const fetchPokemon = async (pokemonName: string) => {
         return response.data;
 
     } catch (err) {
-        //This check help us differentiate between general errors and Axios-specific ones
-        if (axios.isAxiosError(err)) {
-            console.error('Axios error:', err.response?.data);
-            console.error('Axios status:', err.response?.status);
-        } else {
-            console.error('Unknown error:', err);
-        }
+        // logIfAxiosError(err)
         throw err;
     }
 };
+
+export const fetchByType = async (typeName: string) => {
+    const url = BASE_URL + "type/" + typeName
+    // console.log(url)
+
+    try {
+        const response = await axios.get(url);
+
+        return response.data;
+
+    } catch (err) {
+        // logIfAxiosError(err)
+        throw err;
+    }
+}
+
+export const fetchByMove = async (moveName: string) => {
+    const url = BASE_URL + "move/" + moveName
+
+    try {
+        const response = await axios.get(url);
+
+        return response.data;
+
+    } catch (err) {
+        // logIfAxiosError(err)
+        throw err;
+    }
+}
+
+export const fetchPokemonSpecies = async (pokemonName: string) => {
+    const url = BASE_URL + "pokemon-species/" + pokemonName
+
+    try {
+        const response = await axios.get(url);
+
+        return response.data;
+
+    } catch (err) {
+        // logIfAxiosError(err)
+        throw err;
+    }
+}

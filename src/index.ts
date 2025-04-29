@@ -26,7 +26,8 @@ function getIdFromUrl(url) {
 }
 
 
-app.get("/search", validateAndSanitizeQueryString(["name", "type", "evolve"]), async (req: Request, res: Response) => {
+
+app.get("/search", validateAndSanitizeQueryString(["name", "type"]), async (req: Request, res: Response) => {
     const type = req.query.type as string;
     console.log(req.query)
     const chains: ChainType[] = []
@@ -34,22 +35,22 @@ app.get("/search", validateAndSanitizeQueryString(["name", "type", "evolve"]), a
     try {
         const result = await fetchByType(type);
 
-        for (const entry of result.pokemon) {
-            try {
-                const species = await fetchPokemonSpecies(entry.pokemon.name);
-                let localizedName = "";
-                for (const name of species.names) {
-                    if (name.language.name === "fr") {
-                        localizedName = name.name;
-                        break;
-                    }
-                }
-                chains.push({ "id": getIdFromUrl(species.evolution_chain.url), "name": localizedName });
-            } catch (err) {
-                console.error(`Species error for ${entry.pokemon.name}:`, err);
-                entry.species = { error: "Species data unavailable" };
-            }
-        }
+        // for (const entry of result.pokemon) {
+        //     try {
+        //         const species = await fetchPokemonSpecies(entry.pokemon.name);
+        //         let localizedName = "";
+        //         for (const name of species.names) {
+        //             if (name.language.name === "fr") {
+        //                 localizedName = name.name;
+        //                 break;
+        //             }
+        //         }
+        //         chains.push({ "id": getIdFromUrl(species.evolution_chain.url), "name": localizedName });
+        //     } catch (err) {
+        //         console.error(`Species error for ${entry.pokemon.name}:`, err);
+        //         entry.species = { error: "Species data unavailable" };
+        //     }
+        // }
 
         // for (const chain of chains) {
         //     try {

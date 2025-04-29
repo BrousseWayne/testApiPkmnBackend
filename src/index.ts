@@ -3,7 +3,7 @@ import type { Request, Response } from "express"
 import dotenv from "dotenv"
 import helmet from "helmet"
 import { validateAndSanitizeQueryString } from "./middlewares.ts"
-import { fetchByType, fetchEvolutionChain, fetchPokemonSpecies } from "./fetchPokemon.ts"
+import { fetchByName, fetchByType, fetchEvolutionChain, fetchPokemonSpecies } from "./fetchPokemon.ts"
 import { EndOfLineState } from "typescript"
 
 dotenv.config({ path: '/Users/samy/Projects/testBackendApi/conf.env' })
@@ -28,12 +28,16 @@ function getIdFromUrl(url) {
 
 
 app.get("/search", validateAndSanitizeQueryString(["name", "type"]), async (req: Request, res: Response) => {
-    const type = req.query.type as string;
+    const type = as string;
     console.log(req.query)
     const chains: ChainType[] = []
 
     try {
-        const result = await fetchByType(type);
+        if (req.query.type) {
+            res.json(await fetchByType(req.query.type as string))
+        } else {
+            res.json(await fetchByName(req.query.name as string))
+        }
 
         // for (const entry of result.pokemon) {
         //     try {
@@ -61,10 +65,6 @@ app.get("/search", validateAndSanitizeQueryString(["name", "type"]), async (req:
         //         console.error(`ERR`, err);
         //     }
         // }
-
-
-
-        res.json(result);
 
     } catch (error) {
         const status = error.status || 500;

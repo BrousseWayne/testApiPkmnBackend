@@ -28,6 +28,7 @@ function getIdFromUrl(url) {
 
 app.get("/search", validateAndSanitizeQueryString(["name", "type", "evolve"]), async (req: Request, res: Response) => {
     const type = req.query.type as string;
+    console.log(req.query)
     const chains: ChainType[] = []
 
     try {
@@ -50,41 +51,16 @@ app.get("/search", validateAndSanitizeQueryString(["name", "type", "evolve"]), a
             }
         }
 
-        for (const chain of chains) {
-            try {
-                const test = await fetchEvolutionChain(chain.id)
-                console.log(test.chain.evolves_to.length, chain.id, test.chain, chain.name)
-                // while (test.evolves_to !== undefined)
-            } catch (err) {
-                console.error(`ERR`, err);
-            }
-        }
-
-
-
-        // const validPokemon = ((nbOfevoWanted) => {
-        //     const mapUrlNumber = new Map()
-        //     const validEntry = []
-        //     for (const chain of chains) {
-        //         if (mapUrlNumber.has(chain.url)) {
-        //             let mappedChain = mapUrlNumber.get(chain.url)
-        //             mapUrlNumber.set(chain.url, [...mappedChain, chain.name])
-        //         }
-        //         else {
-        //             mapUrlNumber.set(chain.url, [chain.name])
-        //         }
+        // for (const chain of chains) {
+        //     try {
+        //         const test = await fetchEvolutionChain(chain.id)
+        //         console.log(test.chain.evolves_to.length, chain.id, test.chain, chain.name)
+        //         // while (test.evolves_to !== undefined)
+        //     } catch (err) {
+        //         console.error(`ERR`, err);
         //     }
-        //     for (const entry of mapUrlNumber.entries()) {
-        //         console.log(entry[0], entry[1], entry[1].length, nbOfevoWanted)
-        //         if (entry[1].length === nbOfevoWanted) {
-        //             validEntry.push(entry[0])
-        //         }
+        // }
 
-        //     }
-        //     return validEntry
-        // })
-
-        // console.log(validPokemon(1))
 
 
         res.json(result);

@@ -2,68 +2,97 @@ import axios from "axios";
 
 const BASE_URL = "https://pokeapi.co/api/v2/"
 
-const logIfAxiosError = (err: unknown) => {
-    if (axios.isAxiosError(err)) {
-        console.error('Axios error:', err.response?.data);
-        console.error('Axios status:', err.response?.status);
-    } else {
-        console.error('Unknown error:', err);
-    }
-}
+// export type AxiosFetchErrorType = {
+//     status: number;
+//     message: string;
+// }
 
-export const fetchPokemon = async (pokemonName: string) => {
-    const url = BASE_URL + "pokemon/" + pokemonName
+export const fetchByName = async (pokemonName: string) => {
+    const url = `${BASE_URL}pokemon/${pokemonName}`;
     try {
         const response = await axios.get(url);
-
-        // Axios automatically parses the response as JSON, so we can access the data directly
         return response.data;
-
     } catch (err) {
-        // logIfAxiosError(err)
-        throw err;
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch pokemon: ${pokemonName}`
+            }
+        }
+
+        throw { status: 500, message: "Unknown error occurred" };
     }
 };
 
 export const fetchByType = async (typeName: string) => {
-    const url = BASE_URL + "type/" + typeName
-    // console.log(url)
-
+    const url = `${BASE_URL}type/${typeName}`;
     try {
         const response = await axios.get(url);
-
         return response.data;
-
     } catch (err) {
-        // logIfAxiosError(err)
-        throw err;
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch type: ${typeName}`
+            }
+        }
+
+        throw { status: 500, message: "Unknown error occurred" };
     }
-}
+};
 
 export const fetchByMove = async (moveName: string) => {
-    const url = BASE_URL + "move/" + moveName
-
+    const url = `${BASE_URL}move/${moveName}`;
     try {
         const response = await axios.get(url);
-
         return response.data;
-
     } catch (err) {
-        // logIfAxiosError(err)
-        throw err;
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch move for: ${moveName}`
+            };
+        }
+
+        throw { status: 500, message: "Unknown error occurred" };
     }
-}
+};
+
+
 
 export const fetchPokemonSpecies = async (pokemonName: string) => {
-    const url = BASE_URL + "pokemon-species/" + pokemonName
-
+    const url = `${BASE_URL}pokemon-species/${pokemonName}`;
     try {
         const response = await axios.get(url);
-
         return response.data;
-
     } catch (err) {
-        // logIfAxiosError(err)
-        throw err;
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch species for: ${pokemonName}`
+            };
+        }
+
+        throw { status: 500, message: "Unknown error occurred" };
     }
-}
+};
+
+export const fetchEvolutionChain = async (chainId: number) => {
+    const url = `${BASE_URL}evolution-chain/${chainId}`;
+    try {
+        const response = await axios.get(url);
+        return response.data;
+    } catch (err) {
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch chain for: ${chainId}`
+            };
+        }
+
+        throw { status: 500, message: "Unknown error occurred" };
+    }
+};
+
+
+

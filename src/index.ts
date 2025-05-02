@@ -3,76 +3,57 @@ import type { Request, Response } from "express"
 import dotenv from "dotenv"
 import helmet from "helmet"
 import { validateAndSanitizeQueryString } from "./middlewares.ts"
-import { fetchByName, fetchByType, fetchEvolutionChain, fetchPokemonSpecies } from "./fetchPokemon.ts"
-import { EndOfLineState } from "typescript"
+import { fetchByName, fetchByType } from "./fetchPokemon.ts"
+import cors from "cors"
 
 dotenv.config({ path: '/Users/samy/Projects/testBackendApi/conf.env' })
+
 const PORT = process.env.PORT
 const app = express()
 
+const corsOption = {
+    origin: ["http://localhost:5173"]
+};
+
+
 app.use(helmet())
+
+app.use(cors(corsOption));
+
 
 app.get("/", (req, res) => {
     res.send("Welcome to the Pokémon API!");
 });
 
-type ChainType = {
-    id: number
-    name: string
-}
-
-function getIdFromUrl(url) {
-    return parseInt(url.split('/').filter(Boolean).pop(), 10);
-}
-
-
 
 app.get("/search", validateAndSanitizeQueryString(["name", "type"]), async (req: Request, res: Response) => {
-    const type = as string;
-    console.log(req.query)
-    const chains: ChainType[] = []
-
     try {
         if (req.query.type) {
-            res.json(await fetchByType(req.query.type as string))
+            const result = await fetchByType(req.query.type as string)
+            const allPkmn = []
+            for (const pokemon of result.pokemon) {
+                try {
+                    const fetchedPkmn = await fetchByName(pokemon.pokemon.name)
+                    allPkmn.push(fetchedPkmn)
+                } catch (err) {
+                    const status = err.status || 500;
+                    const message = err.message || "Failed to fetch Pokémon";
+
+                    res.status(status).json({
+                        error: message,
+                    });
+                }
+            }
+            res.json(allPkmn)
         } else {
             res.json(await fetchByName(req.query.name as string))
         }
-
-        // for (const entry of result.pokemon) {
-        //     try {
-        //         const species = await fetchPokemonSpecies(entry.pokemon.name);
-        //         let localizedName = "";
-        //         for (const name of species.names) {
-        //             if (name.language.name === "fr") {
-        //                 localizedName = name.name;
-        //                 break;
-        //             }
-        //         }
-        //         chains.push({ "id": getIdFromUrl(species.evolution_chain.url), "name": localizedName });
-        //     } catch (err) {
-        //         console.error(`Species error for ${entry.pokemon.name}:`, err);
-        //         entry.species = { error: "Species data unavailable" };
-        //     }
-        // }
-
-        // for (const chain of chains) {
-        //     try {
-        //         const test = await fetchEvolutionChain(chain.id)
-        //         console.log(test.chain.evolves_to.length, chain.id, test.chain, chain.name)
-        //         // while (test.evolves_to !== undefined)
-        //     } catch (err) {
-        //         console.error(`ERR`, err);
-        //     }
-        // }
-
     } catch (error) {
         const status = error.status || 500;
         const message = error.message || "Failed to fetch Pokémon";
 
         res.status(status).json({
             error: message,
-            details: status === 404 ? `Type '${type}' not found` : undefined
         });
     }
 });

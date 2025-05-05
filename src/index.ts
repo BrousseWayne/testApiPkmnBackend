@@ -25,36 +25,43 @@ app.get("/", (req, res) => {
     res.send("Welcome to the Pokémon API!");
 });
 
+const pkmnCache = new Map();
+
+async function cachedFetchByName(name: string) {
+    if (pkmnCache.has(name)) {
+        return pkmnCache.get(name);
+    }
+    const data = await fetchByName(name);
+    pkmnCache.set(name, data);
+    return data;
+}
+
 
 app.get("/search", validateAndSanitizeQueryString(["name", "type"]), async (req: Request, res: Response) => {
     try {
         if (req.query.type) {
-            const result = await fetchByType(req.query.type as string)
-            const allPkmn = []
-            for (const pokemon of result.pokemon) {
-                try {
-                    const fetchedPkmn = await fetchByName(pokemon.pokemon.name)
-                    allPkmn.push(fetchedPkmn)
-                } catch (err) {
-                    const status = err.status || 500;
-                    const message = err.message || "Failed to fetch Pokémon";
+            const result = await fetchByType(req.query.type as string);
 
-                    res.status(status).json({
-                        error: message,
-                    });
-                }
-            }
-            res.json(allPkmn)
+            const allPkmn = await Promise.all(
+                result.pokemon.map(async (entry) => {
+                    try {
+                        return await cachedFetchByName(entry.pokemon.name);
+                    } catch (err) {
+                        console.error(`Failed to fetch ${entry.pokemon.name}:`, err);
+                        return null; // or a fallback object
+                    }
+                })
+            );
+
+            const successfulPkmn = allPkmn.filter(p => p !== null);
+            res.json(successfulPkmn);
         } else {
-            res.json(await fetchByName(req.query.name as string))
+            res.json(await cachedFetchByName(req.query.name as string));
         }
-    } catch (error) {
-        const status = error.status || 500;
-        const message = error.message || "Failed to fetch Pokémon";
-
-        res.status(status).json({
-            error: message,
-        });
+    } catch (err) {
+        const status = err.status || 500;
+        const message = err.message || "Failed to fetch Pokémon";
+        res.status(status).json({ error: message });
     }
 });
 
@@ -64,3 +71,6 @@ app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`)
 })
 
+
+//TODO: Add caching with redis
+//TODO: Add database

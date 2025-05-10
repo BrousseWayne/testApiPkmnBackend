@@ -58,6 +58,24 @@ export const fetchByMove = async (moveName: string) => {
     }
 };
 
+export const fetchAllMoves = async () => {
+    const url = `${BASE_URL}move?limit=100000&offset=0`;
+    try {
+        const response = await axios.get(url);
+        return response.data;
+    } catch (err) {
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch moves`
+            };
+        }
+
+        throw { status: 500, message: "Unknown error occurred" };
+    }
+};
+
+
 
 
 export const fetchPokemonSpecies = async (pokemonName: string) => {

@@ -3,7 +3,7 @@ import type { Request, Response } from "express"
 import dotenv from "dotenv"
 import helmet from "helmet"
 import { validateAndSanitizeQueryString } from "./middlewares.ts"
-import { fetchByMove, fetchByName, fetchByType } from "./fetchPokemon.ts"
+import { fetchAllMoves, fetchByMove, fetchByName, fetchByType } from "./fetchPokemon.ts"
 import cors from "cors"
 
 dotenv.config({ path: '/Users/samy/Projects/testBackendApi/conf.env' })
@@ -76,6 +76,11 @@ app.post("/moves", async (req: Request, res: Response) => {
         const result = await fetchByMove(moveName)
         console.log(result)
         res.json(result)
+    }
+    else {
+        //smallest subset here
+        const result = await fetchAllMoves()
+        console.log(result)
     }
     // try {
     //     if (req.query.type) {

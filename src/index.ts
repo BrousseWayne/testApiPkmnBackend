@@ -26,13 +26,23 @@ app.get("/", (req, res) => {
 });
 
 const pkmnCache = new Map();
+const moveCache = new Map();
 
-async function cachedFetchByName(name: string) {
+async function cachedFetchPokemonByName(name: string) {
     if (pkmnCache.has(name)) {
         return pkmnCache.get(name);
     }
     const data = await fetchByName(name);
     pkmnCache.set(name, data);
+    return data;
+}
+
+async function cachedFetchMoveByName(name: string) {
+    if (moveCache.has(name)) {
+        return moveCache.get(name);
+    }
+    const data = await fetchByMove(name);
+    moveCache.set(name, data);
     return data;
 }
 
@@ -46,10 +56,10 @@ app.get("/pokemon", validateAndSanitizeQueryString(["name", "type"]), async (req
             const allPkmn = await Promise.all(
                 result.pokemon.map(async (entry) => {
                     try {
-                        return await cachedFetchByName(entry.pokemon.name);
+                        return await cachedFetchPokemonByName(entry.pokemon.name);
                     } catch (err) {
                         console.error(`Failed to fetch ${entry.pokemon.name}:`, err);
-                        return null; // or a fallback object
+                        return null;
                     }
                 })
             );
@@ -57,7 +67,7 @@ app.get("/pokemon", validateAndSanitizeQueryString(["name", "type"]), async (req
             const successfulPkmn = allPkmn.filter(p => p !== null);
             res.json(successfulPkmn);
         } else {
-            res.json(await cachedFetchByName(req.query.name as string));
+            res.json(await cachedFetchPokemonByName(req.query.name as string));
         }
     } catch (err) {
         const status = err.status || 500;
@@ -69,44 +79,42 @@ app.get("/pokemon", validateAndSanitizeQueryString(["name", "type"]), async (req
 // "searchBy: type, statAttack > 50, "
 // "damage-class", "name", "power", "type"
 
+const fetchSmallestSubset = async (request) => {
+    if (moveType) {
+        const type = await fetchByType(moveType.toLowerCase())
+        return type.moves;
+    }
+    else if (damageClass) {
+        const dmgClass = await fetchByDamageClass(damageClass.toLowerCase())
+        return dmgClass.moves;
+    }
+
+    const all = await fetchAllMoves();
+    return all;
+}
+
+// const
+
 app.post("/moves", async (req: Request, res: Response) => {
     console.log(req.body)
     const { moveName, powerOperator, movePower, moveType, damageClass } = req.body
-    if (moveName) {
-        const result = await fetchByMove(moveName)
-        console.log(result)
-        res.json(result)
-    }
-    else {
-        //smallest subset here
-        const result = await fetchAllMoves()
-        console.log(result)
-    }
-    // try {
-    //     if (req.query.type) {
-    //         const result = await fetchByType(req.query.type as string);
+    const request = { moveName, powerOperator, movePower, moveType, damageClass }
+    try {
+        if (moveName) {
+            const result = await cachedFetchMoveByName(moveName)
+            console.log(result)
+            res.json(result)
+        }
+        else {
+            const result = fetchSmallestSubset(request)
+            console.log(result)
+        }
 
-    //         const allPkmn = await Promise.all(
-    //             result.pokemon.map(async (entry) => {
-    //                 try {
-    //                     return await cachedFetchByName(entry.pokemon.name);
-    //                 } catch (err) {
-    //                     console.error(`Failed to fetch ${entry.pokemon.name}:`, err);
-    //                     return null; // or a fallback object
-    //                 }
-    //             })
-    //         );
-
-    //         const successfulPkmn = allPkmn.filter(p => p !== null);
-    //         res.json(successfulPkmn);
-    //     } else {
-    //         res.json(await cachedFetchByName(req.query.name as string));
-    //     }
-    // } catch (err) {
-    //     const status = err.status || 500;
-    //     const message = err.message || "Failed to fetch Pokémon";
-    //     res.status(status).json({ error: message });
-    // }
+    } catch (err) {
+        const status = err.status || 500;
+        const message = err.message || "Failed to fetch Move";
+        res.status(status).json({ error: message });
+    }
 });
 
 

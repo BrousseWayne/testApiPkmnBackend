@@ -1,10 +1,10 @@
 import express from "express"
-import type { Request, Response } from "express"
 import dotenv from "dotenv"
 import helmet from "helmet"
-import { validateAndSanitizeQueryString } from "./middlewares.ts"
-import { fetchAllMoves, fetchByMove, fetchByName, fetchByType } from "./fetchPokemon.ts"
 import cors from "cors"
+import { fetchAllMoves, fetchByDamageClass, fetchByMove, fetchByName, fetchByType } from "./fetchPokemon.ts"
+import { validateAndSanitizeQueryString } from "./middlewares.ts"
+import type { Request, Response } from "express"
 
 dotenv.config({ path: '/Users/samy/Projects/testBackendApi/conf.env' })
 
@@ -17,10 +17,7 @@ const corsOption = {
 
 
 app.use(helmet())
-
 app.use(cors(corsOption));
-
-
 app.get("/", (req, res) => {
     res.send("Welcome to the Pokémon API!");
 });
@@ -76,16 +73,14 @@ app.get("/pokemon", validateAndSanitizeQueryString(["name", "type"]), async (req
     }
 });
 
-// "searchBy: type, statAttack > 50, "
-// "damage-class", "name", "power", "type"
 
 const fetchSmallestSubset = async (request) => {
-    if (moveType) {
-        const type = await fetchByType(moveType.toLowerCase())
+    if (request.moveType) {
+        const type = await fetchByType(request.moveType.toLowerCase())
         return type.moves;
     }
-    else if (damageClass) {
-        const dmgClass = await fetchByDamageClass(damageClass.toLowerCase())
+    else if (request.damageClass) {
+        const dmgClass = await fetchByDamageClass(request.damageClass.toLowerCase())
         return dmgClass.moves;
     }
 
@@ -93,12 +88,121 @@ const fetchSmallestSubset = async (request) => {
     return all;
 }
 
-// const
+const createFilters = (filterCriteria) => {
+    const filters = []
+    const createPowerFilter = (operator, threshold) =>
+        move => {
+            switch (operator) {
+                case '>': return move.power > threshold
+                case '<': return move.power < threshold;
+                case '>=': return move.power >= threshold;
+                case '<=': return move.power <= threshold;
+                case '=': return move.power === threshold;
+            }
+        };
+
+    console.log(filterCriteria.moveStats.powerOperator)
+    if (filterCriteria.moveStats.powerOperator && filterCriteria.moveStats.movePower !== undefined) {
+        filters.push(createPowerFilter(
+            filterCriteria.moveStats.powerOperator,
+            Number(filterCriteria.moveStats.movePower)
+        ));
+    }
+
+    if (filterCriteria.moveType) {
+        filters.push((move) => {
+            return move.type === filterCriteria.moveType
+        });
+    }
+
+    if (filterCriteria.damageClass) {
+        filters.push(move => move.damage_class.name === filterCriteria.damageClass);
+    }
+
+    return filters;
+}
+
+// const createFilters = (filterCriteria) => {
+//     console.log('Raw filter criteria:', JSON.stringify(filterCriteria, null, 2));
+
+//     const filters = [];
+
+//     const createPowerFilter = (operator, threshold) => {
+//         console.log(`Creating power filter: ${operator} ${threshold}`);
+//         return move => {
+//             const power = move.power;
+//             console.log(`Checking move ${move.name}: power=${power}, threshold=${threshold}`);
+
+//             if (power === undefined) {
+//                 console.log(`-> ${move.name} has no power, excluded`);
+//                 return false;
+//             }
+
+//             const result = (() => {
+//                 switch (operator) {
+//                     case '>': return power > threshold;
+//                     case '<': return power < threshold;
+//                     case '>=': return power >= threshold;
+//                     case '<=': return power <= threshold;
+//                     case '=': return power === threshold;
+//                     default:
+//                         console.warn(`Unknown operator '${operator}', defaulting to true`);
+//                         return true;
+//                 }
+//             })();
+
+//             console.log(`-> ${move.name} ${operator} ${threshold}: ${result}`);
+//             return result;
+//         };
+//     };
+
+//     // Power filter
+//     if (filterCriteria.moveStats?.powerOperator && filterCriteria.moveStats?.movePower !== undefined) {
+//         filters.push(createPowerFilter(
+//             filterCriteria.moveStats.powerOperator,
+//             Number(filterCriteria.moveStats.movePower)
+//         ));
+//     } else {
+//         console.log('No power filter created - missing criteria');
+//     }
+
+//     // Type filter
+//     if (filterCriteria.moveType) {
+//         console.log(`Creating type filter for: ${filterCriteria.moveType}`);
+//         filters.push(move => {
+//             const typeMatch = move.type.name === filterCriteria.moveType;
+//             console.log(`Type check: ${move.type.name} === ${filterCriteria.moveType} -> ${typeMatch}`);
+//             return typeMatch;
+//         });
+//     } else {
+//         console.log('No type filter created');
+//     }
+
+//     // Damage class filter
+//     if (filterCriteria.damageClass) {
+//         console.log(`Creating damage class filter for: ${filterCriteria.damageClass}`);
+//         filters.push(move => {
+//             const damageClass = move.damage_class?.name || move.damageClass;
+//             const match = damageClass === filterCriteria.damageClass;
+//             console.log(`Damage class check: ${damageClass} === ${filterCriteria.damageClass} -> ${match}`);
+//             return match;
+//         });
+//     } else {
+//         console.log('No damage class filter created');
+//     }
+
+//     console.log(`Created ${filters.length} filters`);
+//     return filters;
+// };
+
+const applyFilters = (array, ...filters) =>
+    array.filter(item => filters.every(filter => filter(item)));
+
 
 app.post("/moves", async (req: Request, res: Response) => {
     console.log(req.body)
-    const { moveName, powerOperator, movePower, moveType, damageClass } = req.body
-    const request = { moveName, powerOperator, movePower, moveType, damageClass }
+    const { moveName, moveStats, moveType, damageClass } = req.body
+    const filterCriteria = { moveName, moveStats, moveType, damageClass }
     try {
         if (moveName) {
             const result = await cachedFetchMoveByName(moveName)
@@ -106,8 +210,26 @@ app.post("/moves", async (req: Request, res: Response) => {
             res.json(result)
         }
         else {
-            const result = fetchSmallestSubset(request)
-            console.log(result)
+            const result = await fetchSmallestSubset(filterCriteria)
+            const filters = createFilters(filterCriteria)
+            console.log(filters)
+            const allMoves = await Promise.all(
+                result.map(async (entry) => {
+                    try {
+                        return await cachedFetchMoveByName(entry.name);
+                    } catch (err) {
+                        console.error(`Failed to fetch ${entry.name}:`, err);
+                        return null;
+                    }
+                })
+            );
+            allMoves.forEach(element => {
+                console.log(element.power, element.name, element.damage_class, element.type)
+            });
+
+            const successfulMoves = applyFilters(allMoves, ...filters)
+            console.log(successfulMoves)
+            res.json(successfulMoves);
         }
 
     } catch (err) {

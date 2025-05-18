@@ -92,6 +92,9 @@ const createFilters = (filterCriteria) => {
     const filters = []
     const createPowerFilter = (operator, threshold) =>
         move => {
+            if (move.power == null) {
+                return true;
+            }
             switch (operator) {
                 case '>': return move.power > threshold
                 case '<': return move.power < threshold;
@@ -137,6 +140,11 @@ const createFiltersDebug = (filterCriteria) => {
                 return false;
             }
 
+            if (power === null) {
+                console.log(`-> ${move.name} is prolly a status`);
+                return true;
+            }
+
             const result = (() => {
                 switch (operator) {
                     case '>': return power > threshold;
@@ -179,7 +187,7 @@ const createFiltersDebug = (filterCriteria) => {
         console.log(`Creating damage class filter for: ${filterCriteria.damageClass}`);
         filters.push(move => {
             const damageClass = move.damage_class?.name || move.damageClass;
-            const match = damageClass === filterCriteria.damageClass;
+            const match = damageClass === filterCriteria.damageClass.toLowerCase();
             console.log(`Damage class check: ${damageClass} === ${filterCriteria.damageClass} -> ${match}`);
             return match;
         });
@@ -219,12 +227,15 @@ app.post("/moves", async (req: Request, res: Response) => {
                 })
             );
 
-            // allMoves.forEach(element => {
-            //     console.log(element.power, element.name, element.damage_class, element.type)
-            // });
+
 
 
             const successfulMoves = applyFilters(allMoves, ...filters)
+
+            // allMoves.forEach(element => {
+            //     console.log(element.power, element.name, element.damage_class, element.type)
+            // });
+            console.log(successfulMoves)
             res.json(successfulMoves);
         }
 

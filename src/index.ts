@@ -101,7 +101,6 @@ const createFilters = (filterCriteria) => {
             }
         };
 
-    console.log(filterCriteria.moveStats.powerOperator)
     if (filterCriteria.moveStats.powerOperator && filterCriteria.moveStats.movePower !== undefined) {
         filters.push(createPowerFilter(
             filterCriteria.moveStats.powerOperator,
@@ -111,96 +110,92 @@ const createFilters = (filterCriteria) => {
 
     if (filterCriteria.moveType) {
         filters.push((move) => {
-            return move.type === filterCriteria.moveType
+            return move.type.name === filterCriteria.moveType
         });
     }
 
     if (filterCriteria.damageClass) {
-        filters.push(move => move.damage_class.name === filterCriteria.damageClass);
+        filters.push(move => move.damage_class.name === filterCriteria.damageClass.toLowerCase());
     }
 
     return filters;
 }
 
-// const createFilters = (filterCriteria) => {
-//     console.log('Raw filter criteria:', JSON.stringify(filterCriteria, null, 2));
+const createFiltersDebug = (filterCriteria) => {
+    console.log('Raw filter criteria:', JSON.stringify(filterCriteria, null, 2));
 
-//     const filters = [];
+    const filters = [];
 
-//     const createPowerFilter = (operator, threshold) => {
-//         console.log(`Creating power filter: ${operator} ${threshold}`);
-//         return move => {
-//             const power = move.power;
-//             console.log(`Checking move ${move.name}: power=${power}, threshold=${threshold}`);
+    const createPowerFilter = (operator, threshold) => {
+        console.log(`Creating power filter: ${operator} ${threshold}`);
+        return move => {
+            const power = move.power;
+            console.log(`Checking move ${move.name}: power=${power}, threshold=${threshold}`);
 
-//             if (power === undefined) {
-//                 console.log(`-> ${move.name} has no power, excluded`);
-//                 return false;
-//             }
+            if (power === undefined) {
+                console.log(`-> ${move.name} has no power, excluded`);
+                return false;
+            }
 
-//             const result = (() => {
-//                 switch (operator) {
-//                     case '>': return power > threshold;
-//                     case '<': return power < threshold;
-//                     case '>=': return power >= threshold;
-//                     case '<=': return power <= threshold;
-//                     case '=': return power === threshold;
-//                     default:
-//                         console.warn(`Unknown operator '${operator}', defaulting to true`);
-//                         return true;
-//                 }
-//             })();
+            const result = (() => {
+                switch (operator) {
+                    case '>': return power > threshold;
+                    case '<': return power < threshold;
+                    case '>=': return power >= threshold;
+                    case '<=': return power <= threshold;
+                    case '=': return power === threshold;
+                    default:
+                        console.warn(`Unknown operator '${operator}', defaulting to true`);
+                        return true;
+                }
+            })();
 
-//             console.log(`-> ${move.name} ${operator} ${threshold}: ${result}`);
-//             return result;
-//         };
-//     };
+            console.log(`-> ${move.name} ${operator} ${threshold}: ${result}`);
+            return result;
+        };
+    };
 
-//     // Power filter
-//     if (filterCriteria.moveStats?.powerOperator && filterCriteria.moveStats?.movePower !== undefined) {
-//         filters.push(createPowerFilter(
-//             filterCriteria.moveStats.powerOperator,
-//             Number(filterCriteria.moveStats.movePower)
-//         ));
-//     } else {
-//         console.log('No power filter created - missing criteria');
-//     }
+    if (filterCriteria.moveStats?.powerOperator && filterCriteria.moveStats?.movePower !== undefined) {
+        filters.push(createPowerFilter(
+            filterCriteria.moveStats.powerOperator,
+            Number(filterCriteria.moveStats.movePower)
+        ));
+    } else {
+        console.log('No power filter created - missing criteria');
+    }
 
-//     // Type filter
-//     if (filterCriteria.moveType) {
-//         console.log(`Creating type filter for: ${filterCriteria.moveType}`);
-//         filters.push(move => {
-//             const typeMatch = move.type.name === filterCriteria.moveType;
-//             console.log(`Type check: ${move.type.name} === ${filterCriteria.moveType} -> ${typeMatch}`);
-//             return typeMatch;
-//         });
-//     } else {
-//         console.log('No type filter created');
-//     }
+    if (filterCriteria.moveType) {
+        console.log(`Creating type filter for: ${filterCriteria.moveType}`);
+        filters.push(move => {
+            const typeMatch = move.type.name === filterCriteria.moveType;
+            console.log(`Type check: ${move.type.name} === ${filterCriteria.moveType} -> ${typeMatch}`);
+            return typeMatch;
+        });
+    } else {
+        console.log('No type filter created');
+    }
 
-//     // Damage class filter
-//     if (filterCriteria.damageClass) {
-//         console.log(`Creating damage class filter for: ${filterCriteria.damageClass}`);
-//         filters.push(move => {
-//             const damageClass = move.damage_class?.name || move.damageClass;
-//             const match = damageClass === filterCriteria.damageClass;
-//             console.log(`Damage class check: ${damageClass} === ${filterCriteria.damageClass} -> ${match}`);
-//             return match;
-//         });
-//     } else {
-//         console.log('No damage class filter created');
-//     }
+    if (filterCriteria.damageClass) {
+        console.log(`Creating damage class filter for: ${filterCriteria.damageClass}`);
+        filters.push(move => {
+            const damageClass = move.damage_class?.name || move.damageClass;
+            const match = damageClass === filterCriteria.damageClass;
+            console.log(`Damage class check: ${damageClass} === ${filterCriteria.damageClass} -> ${match}`);
+            return match;
+        });
+    } else {
+        console.log('No damage class filter created');
+    }
 
-//     console.log(`Created ${filters.length} filters`);
-//     return filters;
-// };
+    console.log(`Created ${filters.length} filters`);
+    return filters;
+};
 
 const applyFilters = (array, ...filters) =>
     array.filter(item => filters.every(filter => filter(item)));
 
 
 app.post("/moves", async (req: Request, res: Response) => {
-    console.log(req.body)
     const { moveName, moveStats, moveType, damageClass } = req.body
     const filterCriteria = { moveName, moveStats, moveType, damageClass }
     try {
@@ -223,12 +218,13 @@ app.post("/moves", async (req: Request, res: Response) => {
                     }
                 })
             );
-            allMoves.forEach(element => {
-                console.log(element.power, element.name, element.damage_class, element.type)
-            });
+
+            // allMoves.forEach(element => {
+            //     console.log(element.power, element.name, element.damage_class, element.type)
+            // });
+
 
             const successfulMoves = applyFilters(allMoves, ...filters)
-            console.log(successfulMoves)
             res.json(successfulMoves);
         }
 

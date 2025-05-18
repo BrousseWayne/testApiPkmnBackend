@@ -75,8 +75,22 @@ export const fetchAllMoves = async () => {
     }
 };
 
+export const fetchByDamageClass = async (damageClassName: string) => {
+    const url = `${BASE_URL}move-damage-class/${damageClassName}`
+    try {
+        const response = await axios.get(url);
+        return response.data;
+    } catch (err) {
+        if (axios.isAxiosError(err)) {
+            throw {
+                status: err.response?.status || 500,
+                message: `Failed to fetch damageClass for: ${damageClassName}`
+            };
+        }
 
-
+        throw { status: 500, message: "Unknown error occurred" };
+    }
+}
 
 export const fetchPokemonSpecies = async (pokemonName: string) => {
     const url = `${BASE_URL}pokemon-species/${pokemonName}`;

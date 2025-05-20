@@ -85,14 +85,14 @@ const fetchSmallestSubset = async (request) => {
     }
 
     const all = await fetchAllMoves();
-    return all;
+    return all.results;
 }
 
 const createFilters = (filterCriteria) => {
     const filters = []
     const createPowerFilter = (operator, threshold) =>
         move => {
-            if (move.power == null) {
+            if (move.power === null && threshold === "") {
                 return true;
             }
             switch (operator) {
@@ -216,7 +216,6 @@ app.post("/moves", async (req: Request, res: Response) => {
         else {
             const result = await fetchSmallestSubset(filterCriteria)
             const filters = createFilters(filterCriteria)
-            console.log(filters)
             const allMoves = await Promise.all(
                 result.map(async (entry) => {
                     try {
@@ -228,17 +227,7 @@ app.post("/moves", async (req: Request, res: Response) => {
                 })
             );
 
-
-
-
             const successfulMoves = applyFilters(allMoves, ...filters)
-
-            // allMoves.forEach(element => {
-            //     console.log(element.power, element.name, element.damage_class, element.type)
-            // });
-
-            console.log(allMoves.length)
-            console.log(successfulMoves.length)
             res.json(successfulMoves);
         }
 

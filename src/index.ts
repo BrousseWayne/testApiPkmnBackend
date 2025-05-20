@@ -104,7 +104,7 @@ const createFilters = (filterCriteria) => {
             }
         };
 
-    if (filterCriteria.moveStats.powerOperator && filterCriteria.moveStats.movePower !== undefined) {
+    if (filterCriteria.moveStats.movePower !== "") {
         filters.push(createPowerFilter(
             filterCriteria.moveStats.powerOperator,
             Number(filterCriteria.moveStats.movePower)
@@ -163,7 +163,8 @@ const createFiltersDebug = (filterCriteria) => {
         };
     };
 
-    if (filterCriteria.moveStats?.powerOperator && filterCriteria.moveStats?.movePower !== undefined) {
+
+    if (filterCriteria.moveStats.movePower !== "") {
         filters.push(createPowerFilter(
             filterCriteria.moveStats.powerOperator,
             Number(filterCriteria.moveStats.movePower)
@@ -235,7 +236,9 @@ app.post("/moves", async (req: Request, res: Response) => {
             // allMoves.forEach(element => {
             //     console.log(element.power, element.name, element.damage_class, element.type)
             // });
-            console.log(successfulMoves)
+
+            console.log(allMoves.length)
+            console.log(successfulMoves.length)
             res.json(successfulMoves);
         }
 
